@@ -4,26 +4,19 @@ import numpy as np
 import joblib
 import shap
 import matplotlib.pyplot as plt
-from lime.lime_tabular import LimeTabularExplainer
 
 # 设置页面配置
 st.set_page_config(page_title="心脏病预测系统", layout="wide")
 
 
-# 加载模型和数据
+# 加载模型
 @st.cache_resource
 def load_model():
     return joblib.load('RF.pkl')
 
 
-@st.cache_data
-def load_data():
-    return pd.read_csv('X_test.csv')
-
-
-# 加载模型和数据
+# 加载模型
 model = load_model()
-X_test = load_data()
 
 # 特征名称
 feature_names = [
@@ -173,42 +166,7 @@ if st.button('🔍 开始预测', type='primary'):
         except:
             st.error("无法生成SHAP可视化")
 
-    # LIME解释
-    st.markdown('---')
-    st.subheader('🎯 LIME 局部解释')
 
-    try:
-        # 创建LIME解释器
-        lime_explainer = LimeTabularExplainer(
-            training_data=X_test.values,
-            feature_names=X_test.columns.tolist(),
-            class_names=['健康', '患病'],
-            mode='classification',
-            random_state=42
-        )
-
-        # 生成LIME解释
-        lime_exp = lime_explainer.explain_instance(
-            data_row=features.flatten(),
-            predict_fn=model.predict_proba
-        )
-
-        # 显示LIME结果
-        lime_html = lime_exp.as_html(show_table=False)
-        st.components.v1.html(lime_html, height=600, scrolling=True)
-
-        # 显示特征贡献
-        st.markdown("**特征贡献分析：**")
-        lime_list = lime_exp.as_list()
-        for feature, weight in lime_list[:5]:
-            if weight > 0:
-                st.write(f"✅ {feature}: +{weight:.3f} (增加风险)")
-            else:
-                st.write(f"❌ {feature}: {weight:.3f} (降低风险)")
-
-    except Exception as e:
-        st.error(f"LIME解释生成失败: {e}")
-        st.info("请确保X_test.csv文件存在且格式正确")
 
 # 侧边栏信息
 with st.sidebar:
